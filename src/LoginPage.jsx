@@ -48,16 +48,14 @@ export default function LoginPage() {
             <input
               type="text"
               inputMode="numeric"
-              pattern="[0-9]{6}"
-              maxLength={6}
-              placeholder="000000"
+              placeholder="Enter your code"
               value={code}
-              onChange={e => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
               required
               autoComplete="one-time-code"
               className="code-input"
             />
-            <button type="submit" disabled={loading || code.length !== 6}>
+            <button type="submit" disabled={loading || code.length === 0}>
               {loading ? 'Verifying…' : 'Sign in'}
             </button>
           </form>
