@@ -15,7 +15,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
     setMemberSkills(null)
     Promise.all([
       supabase.from('skills').select('*').order('sort_order'),
-      supabase.from('member_skills').select('*').eq('member_id', memberId),
+      supabase.from('member_skills').select('*, certifier:certified_by(full_name)').eq('member_id', memberId),
     ]).then(([{ data: cat }, { data: ms }]) => {
       setCatalog(cat ?? [])
       setMemberSkills(ms ?? [])
@@ -24,7 +24,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
 
   const statusMap = useMemo(() => {
     const m = {}
-    for (const ms of (memberSkills ?? [])) m[ms.skill_id] = ms.status
+    for (const ms of (memberSkills ?? [])) m[ms.skill_id] = ms
     return m
   }, [memberSkills])
 
@@ -38,8 +38,8 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
         const sorted = [...skills].sort((a, b) => a.sort_order - b.sort_order)
         return {
           category,
-          certified:   sorted.filter(s => statusMap[s.id] === 'certified'),
-          in_progress: sorted.filter(s => statusMap[s.id] === 'in_progress'),
+          certified:   sorted.filter(s => statusMap[s.id]?.status === 'certified'),
+          in_progress: sorted.filter(s => statusMap[s.id]?.status === 'in_progress'),
           not_started: sorted.filter(s => !statusMap[s.id]),
         }
       })
@@ -57,7 +57,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
     } else {
       const { data } = await supabase.from('member_skills')
         .upsert({ member_id: memberId, skill_id: skill.id, status: 'in_progress', updated_at: new Date().toISOString() })
-        .select().single()
+        .select('*, certifier:certified_by(full_name)').single()
       if (data) setMemberSkills(prev => [...prev.filter(ms => ms.skill_id !== skill.id), data])
     }
     setBusy(null)
@@ -66,15 +66,17 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
   async function certify(skill) {
     if (!canCertify || busy) return
     setBusy(skill.id)
+    const now = new Date().toISOString()
     const { data } = await supabase.from('member_skills')
       .upsert({
         member_id:    memberId,
         skill_id:     skill.id,
         status:       'certified',
         certified_by: currentUserId,
-        updated_at:   new Date().toISOString(),
+        certified_at: now,
+        updated_at:   now,
       })
-      .select().single()
+      .select('*, certifier:certified_by(full_name)').single()
     if (data) setMemberSkills(prev => [...prev.filter(ms => ms.skill_id !== skill.id), data])
     setBusy(null)
   }
@@ -107,7 +109,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
               {certified.length > 0 && (
                 <Section label={`Certified (${certified.length})`} variant="certified">
                   {certified.map(s => (
-                    <SkillRow key={s.id} skill={s} status="certified" busy={busy === s.id} />
+                    <SkillRow key={s.id} skill={s} status="certified" busy={busy === s.id} msRow={statusMap[s.id]} />
                   ))}
                 </Section>
               )}
@@ -151,7 +153,7 @@ function Section({ label, variant, children }) {
   )
 }
 
-function SkillRow({ skill, status, busy, onClick, onCertify }) {
+function SkillRow({ skill, status, busy, onClick, onCertify, msRow }) {
   return (
     <div
       className={`msp-skill-row${onClick ? ' msp-clickable' : ''}${busy ? ' msp-busy' : ''}`}
@@ -161,6 +163,12 @@ function SkillRow({ skill, status, busy, onClick, onCertify }) {
       <span className="msp-skill-name">{skill.name}</span>
       {skill.safety_critical && (
         <span className="msp-safety" title="Safety critical">!</span>
+      )}
+      {status === 'certified' && msRow?.certifier?.full_name && (
+        <span className="msp-cert-meta">
+          by {msRow.certifier.full_name}
+          {msRow.certified_at && ` · ${new Date(msRow.certified_at).toLocaleDateString()}`}
+        </span>
       )}
       {onCertify && (
         <button

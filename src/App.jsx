@@ -14,6 +14,7 @@ const ProfilePage    = lazy(() => import('./ProfilePage'))
 const SkillsCatalog  = lazy(() => import('./SkillsCatalog'))
 const MemberPage     = lazy(() => import('./MemberPage'))
 const CheckinPage    = lazy(() => import('./CheckinPage'))
+const CertifyPage    = lazy(() => import('./CertifyPage'))
 
 const Splash = () => (
   <div className="splash">
@@ -78,6 +79,7 @@ export default function App() {
           <Route path="/skills"      element={<SkillsCatalog hasRole={hasRole} />} />
           <Route path="/members/:id" element={<MemberPage session={session} hasRole={hasRole} />} />
           <Route path="/profile"     element={<ProfilePage session={session} />} />
+          <Route path="/certify"     element={<CertifyPage session={session} hasRole={hasRole} />} />
         </Route>
 
         {/* ── Minimal: no NavBar, bundle stays small ── */}

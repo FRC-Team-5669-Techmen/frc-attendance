@@ -162,6 +162,16 @@
   letter-spacing: normal;
 }
 
+/* ── Certifier attribution ── */
+.msp-cert-meta {
+  font-size: 0.72rem;
+  color: #aaa;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+  flex: 1;
+}
+
 /* ── Certify button ── */
 .msp-certify-btn {
   padding: 0.2rem 0.625rem;
