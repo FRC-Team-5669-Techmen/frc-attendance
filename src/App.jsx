@@ -7,7 +7,9 @@ export default function App() {
   const [session, setSession] = useState(undefined)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session))
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => setSession(session))
+      .catch(() => setSession(null))
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
@@ -15,7 +17,13 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (session === undefined) return null
+  if (session === undefined) {
+    return (
+      <div className="splash">
+        <div className="logo">5669</div>
+      </div>
+    )
+  }
 
   if (!session) return <LoginPage />
 
