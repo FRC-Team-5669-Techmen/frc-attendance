@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { supabase } from './supabase'
 import LoginPage from './LoginPage'
+import CheckinPage from './CheckinPage'
 import './App.css'
+
+function Splash({ email }) {
+  return (
+    <div className="splash">
+      <div className="logo">5669</div>
+      <h1>FRC Team 5669</h1>
+      {email && <p>{email}</p>}
+    </div>
+  )
+}
 
 export default function App() {
   const [session, setSession] = useState(undefined)
@@ -17,21 +29,19 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  if (session === undefined) {
-    return (
-      <div className="splash">
-        <div className="logo">5669</div>
-      </div>
-    )
-  }
-
-  if (!session) return <LoginPage />
+  if (session === undefined) return <Splash />
 
   return (
-    <div className="splash">
-      <div className="logo">5669</div>
-      <h1>FRC Team 5669</h1>
-      <p>{session.user.email}</p>
-    </div>
+    <Routes>
+      <Route
+        path="/"
+        element={session ? <Splash email={session.user.email} /> : <LoginPage />}
+      />
+      <Route
+        path="/checkin"
+        element={session ? <CheckinPage session={session} /> : <Navigate to="/" replace />}
+      />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   )
 }
