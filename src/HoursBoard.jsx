@@ -98,34 +98,39 @@ export default function HoursBoard() {
   return (
     <div className="board-wrap">
       <header className="board-header">
-        <span className="board-title">Team Hours</span>
-        <button className="board-signout" onClick={() => supabase.auth.signOut()}>
-          Sign out
-        </button>
+        <div className="board-header-inner">
+          <span className="board-title">Team Hours</span>
+          <button className="board-signout" onClick={() => supabase.auth.signOut()}>
+            Sign out
+          </button>
+        </div>
       </header>
-      <div className="board-table-wrap">
-        <table className="board-table">
-          <thead>
-            <tr>
-              {colHeader('name', 'Member')}
-              {colHeader('hours', 'Season Hours')}
-              <th className="board-th">Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {sorted.map(r => (
-              <tr key={r.id} className="board-row">
-                <td className="board-td">{r.name}</td>
-                <td className="board-td board-hours">{fmtDuration(r.hours)}</td>
-                <td className="board-td">
-                  <span className={`board-pill ${r.checkedIn ? 'pill-in' : 'pill-out'}`}>
-                    {r.checkedIn ? 'In' : 'Out'}
-                  </span>
-                </td>
+
+      <div className="board-body">
+        <div className="board-table-wrap">
+          <table className="board-table">
+            <thead>
+              <tr>
+                {colHeader('name', 'Member')}
+                {colHeader('hours', 'Season Hours')}
+                <th className="board-th">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {sorted.map(r => (
+                <tr key={r.id} className="board-row">
+                  <td className="board-td">{r.name}</td>
+                  <td className="board-td board-hours">{fmtDuration(r.hours)}</td>
+                  <td className="board-td">
+                    <span className={`board-pill ${r.checkedIn ? 'pill-in' : 'pill-out'}`}>
+                      {r.checkedIn ? 'In' : 'Out'}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   )

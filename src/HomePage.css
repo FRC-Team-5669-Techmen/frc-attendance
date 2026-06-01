@@ -26,14 +26,19 @@
   to { transform: rotate(360deg); }
 }
 
-/* Header */
+/* ── Header ── */
 .home-header {
+  background: #005bff;
+  color: #fff;
+}
+
+.home-header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: #005bff;
-  color: #fff;
+  max-width: 1100px;
+  margin: 0 auto;
 }
 
 .home-title {
@@ -52,7 +57,17 @@
   cursor: pointer;
 }
 
-/* Status card */
+/* ── Body: centers content on desktop ── */
+.home-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* ── Status card ── */
 .status-card {
   background: #fff;
   margin: 1rem 1rem 0.5rem;
@@ -78,6 +93,9 @@
 .status-since {
   font-size: 0.95rem;
   color: #555;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .stats-row {
@@ -113,7 +131,7 @@
   background: #e5e7eb;
 }
 
-/* Toggle button */
+/* ── Toggle button ── */
 .toggle-btn {
   margin: 0.5rem 1rem 0;
   padding: 1.05rem;
@@ -130,7 +148,7 @@
 .toggle-in  { background: #00a86b; color: #fff; }
 .toggle-out { background: #f59e0b; color: #fff; }
 
-/* Event list */
+/* ── Event list ── */
 .events-section {
   margin: 1rem;
   flex: 1;
@@ -149,6 +167,9 @@
   color: #bbb;
   font-size: 0.9rem;
   padding: 0.5rem 0;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
 }
 
 .events-list {

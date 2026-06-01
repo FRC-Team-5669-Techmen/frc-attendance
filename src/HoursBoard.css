@@ -26,13 +26,19 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── Header ── */
 .board-header {
+  background: #005bff;
+  color: #fff;
+}
+
+.board-header-inner {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 1rem 1.25rem;
-  background: #005bff;
-  color: #fff;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .board-title {
@@ -49,6 +55,16 @@
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
+}
+
+/* ── Body: centers table on wide screens ── */
+.board-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .board-table-wrap {

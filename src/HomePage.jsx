@@ -29,7 +29,7 @@ function fmtTime(iso) {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
-export default function HomePage({ session }) {
+export default function HomePage({ session, hasRole }) {
   const [allEvents, setAllEvents] = useState(null)
   const [acting, setActing] = useState(false)
 
@@ -80,56 +80,60 @@ export default function HomePage({ session }) {
   return (
     <div className="home-wrap">
       <header className="home-header">
-        <span className="home-title">5669 Attendance</span>
-        <button className="signout-btn" onClick={() => supabase.auth.signOut()}>
-          Sign out
-        </button>
+        <div className="home-header-inner">
+          <span className="home-title">5669 Attendance</span>
+          <button className="signout-btn" onClick={() => supabase.auth.signOut()}>
+            Sign out
+          </button>
+        </div>
       </header>
 
-      <div className="status-card">
-        <div className={`status-badge ${isIn ? 'status-in' : 'status-out'}`}>
-          {isIn ? 'Checked in' : 'Not checked in'}
-        </div>
-        {isIn && lastToday && (
-          <p className="status-since">since {fmtTime(lastToday.event_time)}</p>
-        )}
-        <div className="stats-row">
-          <div className="stat">
-            <span className="stat-value">{todayHours || '0m'}</span>
-            <span className="stat-label">Today</span>
+      <div className="home-body">
+        <div className="status-card">
+          <div className={`status-badge ${isIn ? 'status-in' : 'status-out'}`}>
+            {isIn ? 'Checked in' : 'Not checked in'}
           </div>
-          <div className="stat-divider" />
-          <div className="stat">
-            <span className="stat-value">{seasonHours || '0m'}</span>
-            <span className="stat-label">Season</span>
+          {isIn && lastToday && (
+            <p className="status-since">since {fmtTime(lastToday.event_time)}</p>
+          )}
+          <div className="stats-row">
+            <div className="stat">
+              <span className="stat-value">{todayHours || '0m'}</span>
+              <span className="stat-label">Today</span>
+            </div>
+            <div className="stat-divider" />
+            <div className="stat">
+              <span className="stat-value">{seasonHours || '0m'}</span>
+              <span className="stat-label">Season</span>
+            </div>
           </div>
         </div>
+
+        <button
+          className={`toggle-btn ${isIn ? 'toggle-out' : 'toggle-in'}`}
+          onClick={handleToggle}
+          disabled={acting}
+        >
+          {acting ? '…' : isIn ? 'Check Out' : 'Check In'}
+        </button>
+
+        <section className="events-section">
+          <h2 className="events-heading">Today's activity</h2>
+          {todayEvents.length === 0 ? (
+            <p className="events-empty">No activity yet today.</p>
+          ) : (
+            <ul className="events-list">
+              {[...todayEvents].reverse().map(e => (
+                <li key={e.id} className={`event-item event-${e.type}`}>
+                  <span className="event-pip" />
+                  <span className="event-label">Checked {e.type}</span>
+                  <span className="event-meta">{fmtTime(e.event_time)}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </div>
-
-      <button
-        className={`toggle-btn ${isIn ? 'toggle-out' : 'toggle-in'}`}
-        onClick={handleToggle}
-        disabled={acting}
-      >
-        {acting ? '…' : isIn ? 'Check Out' : 'Check In'}
-      </button>
-
-      <section className="events-section">
-        <h2 className="events-heading">Today's activity</h2>
-        {todayEvents.length === 0 ? (
-          <p className="events-empty">No activity yet today.</p>
-        ) : (
-          <ul className="events-list">
-            {[...todayEvents].reverse().map(e => (
-              <li key={e.id} className={`event-item event-${e.type}`}>
-                <span className="event-pip" />
-                <span className="event-label">Checked {e.type}</span>
-                <span className="event-meta">{fmtTime(e.event_time)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
     </div>
   )
 }
