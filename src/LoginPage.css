@@ -31,6 +31,57 @@
   color: #111;
 }
 
+.google-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  padding: 0.8rem 1rem;
+  background: #fff;
+  color: #333;
+  border: 1.5px solid #ddd;
+  border-radius: 0.75rem;
+  font-size: 0.975rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  font-family: inherit;
+}
+
+.google-btn:hover:not(:disabled) {
+  border-color: #aaa;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+
+.google-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.google-icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+}
+
+.login-divider {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: #ccc;
+  font-size: 0.8rem;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
 .login-card .subtitle {
   font-size: 0.875rem;
   color: #666;
