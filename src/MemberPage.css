@@ -81,10 +81,29 @@
   letter-spacing: normal;
 }
 
-.mp-subtitle {
+.mp-subteam {
   font-size: 0.8rem;
+  font-weight: 600;
+  color: #555;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.mp-subtitle {
+  font-size: 0.75rem;
   color: #aaa;
   opacity: 1;
   text-transform: none;
   letter-spacing: normal;
+}
+
+.mp-section-heading {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  margin: 0.25rem 0 0.25rem;
+  opacity: 1;
 }

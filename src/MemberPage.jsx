@@ -5,17 +5,17 @@ import MemberSkillsPanel from './MemberSkillsPanel'
 import './MemberPage.css'
 
 export default function MemberPage({ session, hasRole }) {
-  const { id }    = useParams()
-  const isStaff   = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+  const { id }  = useParams()
+  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
   const [member, setMember] = useState(null)
 
   useEffect(() => {
     supabase
       .from('profiles')
-      .select('full_name, avatar_url')
+      .select('full_name, avatar_url, subteam')
       .eq('id', id)
       .single()
-      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null }))
+      .then(({ data }) => setMember(data ?? { full_name: 'Unknown member', avatar_url: null, subteam: null }))
   }, [id])
 
   if (!member) {
@@ -35,12 +35,14 @@ export default function MemberPage({ session, hasRole }) {
           }
           <div className="mp-id-text">
             <span className="mp-name">{member.full_name || '—'}</span>
+            {member.subteam && <span className="mp-subteam">{member.subteam}</span>}
             <span className="mp-subtitle">
-              {isStaff ? 'Staff view — you can certify skills' : 'Skills progress (read-only)'}
+              {isStaff ? 'Staff view — certify skills from the in-progress or not-started rows' : 'Skills progress (read-only)'}
             </span>
           </div>
         </div>
 
+        <p className="mp-section-heading">Skills</p>
         <MemberSkillsPanel
           memberId={id}
           currentUserId={session.user.id}

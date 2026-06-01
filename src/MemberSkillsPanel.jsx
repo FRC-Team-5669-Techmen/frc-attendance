@@ -7,7 +7,7 @@ import './MemberSkillsPanel.css'
 export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, canCertify }) {
   const [catalog,      setCatalog]      = useState(null)
   const [memberSkills, setMemberSkills] = useState(null)
-  const [busy,         setBusy]         = useState(null) // skill id mid-save
+  const [busy,         setBusy]         = useState(null)
 
   useEffect(() => {
     if (!memberId) return
@@ -47,18 +47,17 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
 
   async function toggleOwn(skill) {
     if (!canEdit || busy) return
-    if (statusMap[skill.id] === 'certified') return
     setBusy(skill.id)
-
-    if (statusMap[skill.id] === 'in_progress') {
+    const ms = statusMap[skill.id]
+    if (ms?.status === 'in_progress') {
       await supabase.from('member_skills')
         .delete().match({ member_id: memberId, skill_id: skill.id })
-      setMemberSkills(prev => prev.filter(ms => ms.skill_id !== skill.id))
+      setMemberSkills(prev => prev.filter(r => r.skill_id !== skill.id))
     } else {
       const { data } = await supabase.from('member_skills')
         .upsert({ member_id: memberId, skill_id: skill.id, status: 'in_progress', updated_at: new Date().toISOString() })
         .select('*, certifier:certified_by(full_name)').single()
-      if (data) setMemberSkills(prev => [...prev.filter(ms => ms.skill_id !== skill.id), data])
+      if (data) setMemberSkills(prev => [...prev.filter(r => r.skill_id !== skill.id), data])
     }
     setBusy(null)
   }
@@ -77,7 +76,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
         updated_at:   now,
       })
       .select('*, certifier:certified_by(full_name)').single()
-    if (data) setMemberSkills(prev => [...prev.filter(ms => ms.skill_id !== skill.id), data])
+    if (data) setMemberSkills(prev => [...prev.filter(r => r.skill_id !== skill.id), data])
     setBusy(null)
   }
 
@@ -92,22 +91,35 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
   return (
     <div className="msp-wrap">
       {canEdit && (
-        <p className="msp-hint">Click any skill to mark it in progress, or click again to clear it.</p>
+        <p className="msp-hint">
+          Click a not-started skill to mark it in progress. Click again to remove it.
+          Staff will certify you when you're ready.
+        </p>
       )}
+
       {grouped.map(({ category, certified, in_progress, not_started }) => {
         const total = certified.length + in_progress.length + not_started.length
+        const allDone = certified.length === total && total > 0
         return (
           <div key={category} className="msp-category">
+
             <div className="msp-cat-header">
               <span className="msp-cat-name">{category}</span>
-              <span className="msp-cat-progress">
-                {certified.length}/{total} certified
-              </span>
+              {allDone
+                ? <span className="msp-cat-complete">All certified ✓</span>
+                : <span className="msp-cat-count">{certified.length} / {total}</span>
+              }
+            </div>
+            <div className="msp-cat-bar-track">
+              <div
+                className="msp-cat-bar-fill"
+                style={{ width: total ? `${(certified.length / total) * 100}%` : '0%' }}
+              />
             </div>
 
             <div className="msp-cat-body">
               {certified.length > 0 && (
-                <Section label={`Certified (${certified.length})`} variant="certified">
+                <Section label="Certified" count={certified.length} variant="certified">
                   {certified.map(s => (
                     <SkillRow key={s.id} skill={s} status="certified" busy={busy === s.id} msRow={statusMap[s.id]} />
                   ))}
@@ -115,7 +127,7 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
               )}
 
               {in_progress.length > 0 && (
-                <Section label={`In Progress (${in_progress.length})`} variant="progress">
+                <Section label="In Progress" count={in_progress.length} variant="progress">
                   {in_progress.map(s => (
                     <SkillRow
                       key={s.id} skill={s} status="in_progress" busy={busy === s.id}
@@ -127,11 +139,12 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
               )}
 
               {not_started.length > 0 && (
-                <Section label={`Not Started (${not_started.length})`} variant="none">
+                <Section label="Not Started" count={not_started.length} variant="none">
                   {not_started.map(s => (
                     <SkillRow
                       key={s.id} skill={s} status="not_started" busy={busy === s.id}
                       onClick={canEdit ? () => toggleOwn(s) : undefined}
+                      onCertify={canCertify ? () => certify(s) : undefined}
                     />
                   ))}
                 </Section>
@@ -144,10 +157,12 @@ export default function MemberSkillsPanel({ memberId, currentUserId, canEdit, ca
   )
 }
 
-function Section({ label, variant, children }) {
+function Section({ label, count, variant, children }) {
   return (
-    <div className="msp-section">
-      <p className={`msp-section-label msp-section-${variant}`}>{label}</p>
+    <div className={`msp-section msp-section-${variant}`}>
+      <p className="msp-section-label">
+        {label} <span className="msp-section-count">({count})</span>
+      </p>
       {children}
     </div>
   )
@@ -160,13 +175,17 @@ function SkillRow({ skill, status, busy, onClick, onCertify, msRow }) {
       onClick={onClick}
     >
       <span className="msp-dot" data-status={status} />
-      <span className="msp-skill-name">{skill.name}</span>
+      <span className={`msp-skill-name${status === 'not_started' ? ' msp-skill-dim' : ''}`}>
+        {skill.name}
+      </span>
       {skill.safety_critical && (
-        <span className="msp-safety" title="Safety critical">!</span>
+        <span className="msp-safety-badge" title="Safety critical — must be certified by a mentor before operating">
+          ⚠ Safety critical
+        </span>
       )}
       {status === 'certified' && msRow?.certifier?.full_name && (
         <span className="msp-cert-meta">
-          by {msRow.certifier.full_name}
+          {msRow.certifier.full_name}
           {msRow.certified_at && ` · ${new Date(msRow.certified_at).toLocaleDateString()}`}
         </span>
       )}
