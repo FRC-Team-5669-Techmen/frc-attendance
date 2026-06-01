@@ -1,0 +1,271 @@
+.cm-wrap {
+  flex: 1;
+  background: #f5f5f5;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cm-denied,
+.cm-empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  font-size: 0.95rem;
+}
+
+.cm-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cm-spinner {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-top-color: #111;
+  border-radius: 50%;
+  animation: cm-spin 0.75s linear infinite;
+}
+
+@keyframes cm-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Toolbar ── */
+.cm-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem 0;
+}
+
+.cm-toggle-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: #555;
+  cursor: pointer;
+  user-select: none;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.cm-toggle-check {
+  accent-color: #111;
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+}
+
+.cm-legend {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.cm-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: #888;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Scrollable table container ── */
+.cm-scroll {
+  flex: 1;
+  overflow: auto;
+  padding: 0.75rem 1rem 1rem;
+}
+
+/* ── Table ── */
+.cm-table {
+  border-collapse: collapse;
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+/* ── Member name column (sticky) ── */
+.cm-member-th,
+.cm-name-cell {
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 2;
+  min-width: 10rem;
+  max-width: 13rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cm-corner {
+  z-index: 3; /* above both sticky col and sticky head */
+  vertical-align: bottom;
+  padding: 0.6rem 1rem 0.5rem;
+  text-align: left;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.cm-member-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 0.4rem;
+  background: #e5e7eb;
+  color: #555;
+  font-size: 0.65rem;
+  font-weight: 700;
+  border-radius: 99px;
+  padding: 0.05rem 0.4rem;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ── Category header row ── */
+.cm-cat-th {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #777;
+  padding: 0.4rem 0.5rem 0.3rem;
+  text-align: center;
+  background: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  white-space: nowrap;
+  opacity: 1;
+}
+
+/* ── Skill name column header (rotated) ── */
+.cm-skill-th {
+  width: 2.25rem;
+  padding: 0.25rem 0.125rem 0;
+  vertical-align: bottom;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.cm-skill-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #555;
+  max-height: 8rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0.25rem 0;
+  opacity: 1;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+.cm-skill-safety {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+/* Category boundary divider */
+.cm-cat-start {
+  border-left: 2px solid #e5e7eb;
+}
+
+/* ── Data cells ── */
+.cm-td {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  color: #333;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.cm-row:not(:last-child) .cm-td,
+.cm-row:not(:last-child) .cm-cell {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cm-row:not(:last-child) .cm-name-cell {
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.cm-cell {
+  text-align: center;
+  padding: 0.45rem 0;
+  vertical-align: middle;
+  width: 2.25rem;
+}
+
+/* ── Status dot ── */
+.cm-dot {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+.cm-dot[data-status="certified"]   { background: #00a86b; }
+.cm-dot[data-status="in_progress"] { background: transparent; border: 2px solid #f59e0b; }
+
+/* ── Count row ── */
+.cm-count-row .cm-name-cell {
+  border-top: 2px solid #e5e7eb;
+  background: #f8fafc;
+}
+
+.cm-count-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #999;
+  padding: 0.5rem 0.75rem;
+  opacity: 1;
+}
+
+.cm-count-cell {
+  text-align: center;
+  padding: 0.4rem 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #555;
+  border-top: 2px solid #e5e7eb;
+  background: #f8fafc;
+  opacity: 1;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.cm-gap-zero {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.cm-gap-one {
+  color: #92400e;
+  background: #fffbeb;
+}

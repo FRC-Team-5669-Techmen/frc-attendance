@@ -33,6 +33,11 @@ export default function NavBar({ hasRole = () => false, session = null }) {
               Certify
             </NavLink>
           )}
+          {isStaff && (
+            <NavLink to="/coverage" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
+              Coverage
+            </NavLink>
+          )}
           <NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}>
             My Profile
           </NavLink>

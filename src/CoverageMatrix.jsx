@@ -1,0 +1,186 @@
+import { useState, useEffect, useMemo } from 'react'
+import { supabase } from './supabase'
+import './CoverageMatrix.css'
+
+export default function CoverageMatrix({ hasRole }) {
+  const isStaff = hasRole('mentor') || hasRole('lead') || hasRole('admin')
+
+  const [members,    setMembers]    = useState(null)
+  const [catalog,    setCatalog]    = useState(null)
+  const [skillRows,  setSkillRows]  = useState(null)
+  const [activeOnly, setActiveOnly] = useState(true)
+
+  useEffect(() => {
+    Promise.all([
+      supabase.from('profiles').select('id, full_name, email, status').order('full_name'),
+      supabase.from('skills').select('*').order('sort_order'),
+      supabase.from('member_skills').select('member_id, skill_id, status'),
+    ]).then(([{ data: p }, { data: s }, { data: ms }]) => {
+      setMembers(p ?? [])
+      setCatalog(s ?? [])
+      setSkillRows(ms ?? [])
+    })
+  }, [])
+
+  // memberId → skillId → status
+  const statusMap = useMemo(() => {
+    const m = {}
+    for (const row of (skillRows ?? [])) {
+      ;(m[row.member_id] ??= {})[row.skill_id] = row.status
+    }
+    return m
+  }, [skillRows])
+
+  // Skills grouped by category, flat ordered list
+  const grouped = useMemo(() => {
+    if (!catalog) return []
+    const map = {}
+    for (const s of catalog) (map[s.category] ??= []).push(s)
+    return Object.entries(map)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([category, skills]) => ({
+        category,
+        skills: [...skills].sort((a, b) => a.sort_order - b.sort_order),
+      }))
+  }, [catalog])
+
+  const flatSkills = useMemo(() => grouped.flatMap(g => g.skills), [grouped])
+
+  const visibleMembers = useMemo(() => {
+    if (!members) return []
+    return activeOnly
+      ? members.filter(m => !m.status || m.status === 'active')
+      : members
+  }, [members, activeOnly])
+
+  if (!isStaff) {
+    return (
+      <div className="cm-wrap">
+        <div className="cm-denied">You need a staff role to view this page.</div>
+      </div>
+    )
+  }
+
+  if (!members || !catalog || !skillRows) {
+    return (
+      <div className="cm-wrap">
+        <div className="cm-loading"><div className="cm-spinner" /></div>
+      </div>
+    )
+  }
+
+  if (flatSkills.length === 0) {
+    return (
+      <div className="cm-wrap">
+        <p className="cm-empty">No skills in the catalog yet.</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="cm-wrap">
+      <div className="cm-toolbar">
+        <label className="cm-toggle-label">
+          <input
+            type="checkbox"
+            checked={activeOnly}
+            onChange={e => setActiveOnly(e.target.checked)}
+            className="cm-toggle-check"
+          />
+          Active members only
+        </label>
+
+        <div className="cm-legend">
+          <span className="cm-legend-item">
+            <span className="cm-dot" data-status="certified" />
+            Certified
+          </span>
+          <span className="cm-legend-item">
+            <span className="cm-dot" data-status="in_progress" />
+            In progress
+          </span>
+        </div>
+      </div>
+
+      <div className="cm-scroll">
+        <table className="cm-table">
+          <thead>
+            {/* Category header row */}
+            <tr>
+              <th className="cm-th cm-member-th cm-corner" rowSpan={2}>
+                Member
+                <span className="cm-member-count">{visibleMembers.length}</span>
+              </th>
+              {grouped.map(({ category, skills }) => (
+                <th key={category} className="cm-cat-th" colSpan={skills.length}>
+                  {category}
+                </th>
+              ))}
+            </tr>
+            {/* Skill name row */}
+            <tr>
+              {flatSkills.map((skill, i) => {
+                const isFirst = grouped.some(g => g.skills[0]?.id === skill.id)
+                return (
+                  <th
+                    key={skill.id}
+                    className={`cm-skill-th${isFirst ? ' cm-cat-start' : ''}`}
+                    title={skill.name}
+                  >
+                    <div className={`cm-skill-label${skill.safety_critical ? ' cm-skill-safety' : ''}`}>
+                      {skill.name}
+                    </div>
+                  </th>
+                )
+              })}
+            </tr>
+          </thead>
+
+          <tbody>
+            {visibleMembers.map(m => (
+              <tr key={m.id} className="cm-row">
+                <td className="cm-td cm-name-cell">{m.full_name || m.email}</td>
+                {flatSkills.map((skill, i) => {
+                  const isFirst = grouped.some(g => g.skills[0]?.id === skill.id)
+                  const status = statusMap[m.id]?.[skill.id] ?? 'not_started'
+                  return (
+                    <td
+                      key={skill.id}
+                      className={`cm-cell${isFirst ? ' cm-cat-start' : ''}`}
+                      title={`${m.full_name || m.email} · ${skill.name}: ${status.replace('_', ' ')}`}
+                    >
+                      {status !== 'not_started' && (
+                        <span className="cm-dot" data-status={status} />
+                      )}
+                    </td>
+                  )
+                })}
+              </tr>
+            ))}
+          </tbody>
+
+          <tfoot>
+            <tr className="cm-count-row">
+              <td className="cm-td cm-name-cell cm-count-label">Certified</td>
+              {flatSkills.map((skill, i) => {
+                const isFirst = grouped.some(g => g.skills[0]?.id === skill.id)
+                const count = visibleMembers.filter(
+                  m => statusMap[m.id]?.[skill.id] === 'certified'
+                ).length
+                return (
+                  <td
+                    key={skill.id}
+                    className={`cm-count-cell${isFirst ? ' cm-cat-start' : ''}${count === 0 ? ' cm-gap-zero' : count === 1 ? ' cm-gap-one' : ''}`}
+                    title={`${count} / ${visibleMembers.length} certified`}
+                  >
+                    {count || '—'}
+                  </td>
+                )
+              })}
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  )
+}
