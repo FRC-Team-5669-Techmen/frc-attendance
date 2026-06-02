@@ -198,6 +198,92 @@
 .vh-type-outreach     { background: #f5f3ff; color: #6d28d9; }
 .vh-type-competition  { background: #fffbeb; color: #92400e; }
 
+/* ── Section header (title + cutoff editor on same row) ── */
+.vh-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+/* ── Cutoff time editor ── */
+.vh-cutoff-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vh-cutoff-label {
+  font-size: 0.75rem;
+  color: #999;
+  white-space: nowrap;
+}
+
+.vh-cutoff-input {
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #111;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  background: #fff;
+  width: 7rem;
+}
+
+.vh-cutoff-input:focus {
+  outline: 2px solid #FFE629;
+  outline-offset: 1px;
+  border-color: transparent;
+}
+
+.vh-cutoff-save {
+  padding: 0.3rem 0.75rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: #111;
+  color: #FFE629;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.vh-cutoff-save:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Session time pairs ── */
+.vh-session-times {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.vh-time-row {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.vh-time-label {
+  color: #aaa;
+  min-width: 6rem;
+}
+
+.vh-time-val {
+  color: #444;
+}
+
+/* ── Divider between sections ── */
+.vh-section-divider {
+  border: none;
+  border-top: 1px solid #e5e7eb;
+  margin: 0.5rem 0;
+}
+
 /* ── Action buttons ── */
 .vh-actions {
   display: flex;

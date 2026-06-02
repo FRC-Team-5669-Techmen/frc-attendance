@@ -24,12 +24,13 @@ function sidFor(dateStr, seasons) {
 /**
  * Build a per-season breakdown map for one member.
  *
- * @param {object[]} seasons         - rows from the seasons table
- * @param {object[]} attendanceEvents - { type, event_time } for this member, any order
- * @param {object[]} loggedHoursRows  - { type, hours, date } verified entries for this member
+ * @param {object[]} seasons            - rows from the seasons table
+ * @param {object[]} attendanceEvents   - { id, type, event_time } for this member, any order
+ * @param {object[]} loggedHoursRows    - { type, hours, date } verified entries for this member
+ * @param {Set<string>} [excludedCheckoutIds] - checkout event IDs to skip (auto-closed, pending/voided review)
  * @returns {{ [seasonId|'other']: { regular, volunteering, outreach, competition, total } }}
  */
-export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows) {
+export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows, excludedCheckoutIds = null) {
   const raw = {} // sid → { regularMs, volunteering, outreach, competition }
 
   // --- Attendance: group events by calendar date, compute closed session ms ---
@@ -41,8 +42,15 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows) {
     evts.sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
     let inTime = null, ms = 0
     for (const e of evts) {
-      if (e.type === 'in') inTime = new Date(e.event_time)
-      else if (e.type === 'out' && inTime) { ms += new Date(e.event_time) - inTime; inTime = null }
+      if (e.type === 'in') {
+        inTime = new Date(e.event_time)
+      } else if (e.type === 'out' && inTime) {
+        // Always close the pair; only count it if not excluded (pending/voided review)
+        if (!excludedCheckoutIds || !excludedCheckoutIds.has(e.id)) {
+          ms += new Date(e.event_time) - inTime
+        }
+        inTime = null
+      }
     }
     if (ms > 0) {
       const sid = sidFor(date, seasons)
@@ -51,6 +59,7 @@ export function buildBreakdown(seasons, attendanceEvents, loggedHoursRows) {
   }
 
   // Open session: find the last unmatched 'in' (member is currently checked in)
+  // Auto-close checkouts clear inTime, so this only fires for genuinely open sessions.
   const sorted = [...attendanceEvents].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
   let openIn = null, openDate = null
   for (const e of sorted) {
@@ -92,4 +101,26 @@ export function sumBreakdown(map) {
     r.total        += b.total
   }
   return r
+}
+
+/**
+ * Total ms of sessions whose checkout ID is in pendingCheckoutIds.
+ * Used to show "X hours pending mentor review" to the member.
+ */
+export function computePendingMs(attendanceEvents, pendingCheckoutIds) {
+  if (!pendingCheckoutIds?.size) return 0
+  let total = 0
+  let inTime = null
+  const sorted = [...attendanceEvents].sort((a, b) => new Date(a.event_time) - new Date(b.event_time))
+  for (const e of sorted) {
+    if (e.type === 'in') {
+      inTime = new Date(e.event_time)
+    } else if (e.type === 'out' && inTime) {
+      if (pendingCheckoutIds.has(e.id)) {
+        total += new Date(e.event_time) - inTime
+      }
+      inTime = null
+    }
+  }
+  return total
 }

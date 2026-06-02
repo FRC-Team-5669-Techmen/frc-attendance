@@ -1,32 +1,53 @@
 import { useState, useEffect, useMemo } from 'react'
 import { supabase } from './supabase'
-import { fmtHours, buildBreakdown } from './hoursUtils'
+import { fmtHours, buildBreakdown, computePendingMs } from './hoursUtils'
 import './MyHoursPage.css'
 
 export default function MyHoursPage({ session }) {
-  const [seasons, setSeasons] = useState(null)
-  const [events,  setEvents]  = useState(null)
-  const [logged,  setLogged]  = useState(null)
+  const [seasons,  setSeasons]  = useState(null)
+  const [events,   setEvents]   = useState(null)
+  const [logged,   setLogged]   = useState(null)
+  const [reviews,  setReviews]  = useState(null)  // user's session_reviews rows
 
   useEffect(() => {
     const uid = session.user.id
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
-      supabase.from('attendance_events').select('type, event_time').eq('user_id', uid).order('event_time'),
+      supabase.from('attendance_events').select('id, type, event_time').eq('user_id', uid).order('event_time'),
       supabase.from('logged_hours').select('type, hours, date').eq('member_id', uid).eq('status', 'verified'),
-    ]).then(([{ data: s }, { data: ae }, { data: lh }]) => {
+      supabase.from('session_reviews').select('checkout_id, status').eq('user_id', uid).in('status', ['pending', 'voided']),
+    ]).then(([{ data: s }, { data: ae }, { data: lh }, { data: sr }]) => {
       setSeasons(s ?? [])
       setEvents(ae ?? [])
       setLogged(lh ?? [])
+      setReviews(sr ?? [])
     })
   }, [session.user.id])
 
-  const breakdown = useMemo(
-    () => seasons && events && logged ? buildBreakdown(seasons, events, logged) : null,
-    [seasons, events, logged]
+  // Checkout IDs excluded from official hours (pending or voided review)
+  const excludedIds = useMemo(
+    () => reviews ? new Set(reviews.map(r => r.checkout_id)) : null,
+    [reviews]
   )
 
-  // Build ordered list of cards: seasons with hours (newest first), then Other
+  // Checkout IDs that are pending review only (shown in the notice, not voided)
+  const pendingIds = useMemo(
+    () => reviews ? new Set(reviews.filter(r => r.status === 'pending').map(r => r.checkout_id)) : null,
+    [reviews]
+  )
+
+  const breakdown = useMemo(
+    () => seasons && events && logged && excludedIds
+      ? buildBreakdown(seasons, events, logged, excludedIds)
+      : null,
+    [seasons, events, logged, excludedIds]
+  )
+
+  const pendingMs = useMemo(
+    () => events && pendingIds ? computePendingMs(events, pendingIds) : 0,
+    [events, pendingIds]
+  )
+
   const cards = useMemo(() => {
     if (!breakdown || !seasons) return []
     const list = []
@@ -45,6 +66,7 @@ export default function MyHoursPage({ session }) {
   }
 
   const grandTotal = cards.reduce((s, c) => s + c.b.total, 0)
+  const pendingCount = pendingIds?.size ?? 0
 
   return (
     <div className="mh-wrap">
@@ -61,6 +83,17 @@ export default function MyHoursPage({ session }) {
               <span className="mh-stat-value">{cards.length}</span>
               <span className="mh-stat-label">{cards.length === 1 ? 'Season' : 'Seasons'}</span>
             </div>
+          </div>
+        )}
+
+        {pendingCount > 0 && (
+          <div className="mh-pending-notice">
+            <span className="mh-pending-icon">⚠</span>
+            <span>
+              {pendingCount} session{pendingCount !== 1 ? 's' : ''}
+              {pendingMs > 0 && ` (${fmtHours(pendingMs / 3600000)})`}
+              {' '}pending mentor review — not counted in your totals yet.
+            </span>
           </div>
         )}
 

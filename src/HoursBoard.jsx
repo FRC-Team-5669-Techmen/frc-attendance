@@ -22,6 +22,7 @@ export default function HoursBoard() {
   const [profiles,  setProfiles]  = useState(null)
   const [allEvents, setAllEvents] = useState(null)
   const [allLogged, setAllLogged] = useState(null)
+  const [excluded,  setExcluded]  = useState(null) // Map<userId, Set<checkoutId>>
   const [selSeason, setSelSeason] = useState(null) // season id | 'all'
   const [sort,      setSort]      = useState({ col: 'total', dir: 'desc' })
 
@@ -29,14 +30,23 @@ export default function HoursBoard() {
     Promise.all([
       supabase.from('seasons').select('*').order('start_date', { ascending: false }),
       supabase.from('profiles').select('id, full_name'),
-      supabase.from('attendance_events').select('user_id, type, event_time').order('event_time'),
+      supabase.from('attendance_events').select('id, user_id, type, event_time').order('event_time'),
       supabase.from('logged_hours').select('member_id, type, hours, date').eq('status', 'verified'),
-    ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }]) => {
+      supabase.from('session_reviews').select('user_id, checkout_id').in('status', ['pending', 'voided']),
+    ]).then(([{ data: s }, { data: p }, { data: ae }, { data: lh }, { data: sr }]) => {
       const seas = s ?? []
       setSeasons(seas)
       setProfiles(p ?? [])
       setAllEvents(ae ?? [])
       setAllLogged(lh ?? [])
+
+      // Build per-user set of checkout IDs that don't count toward official totals
+      const excMap = {}
+      for (const row of sr ?? []) {
+        ;(excMap[row.user_id] ??= new Set()).add(row.checkout_id)
+      }
+      setExcluded(excMap)
+
       const today   = new Date().toISOString().slice(0, 10)
       const current = seas.find(s =>
         s.start_date <= today && (s.end_date == null || s.end_date >= today)
@@ -46,7 +56,7 @@ export default function HoursBoard() {
   }, [])
 
   const byMember = useMemo(() => {
-    if (!seasons || !profiles || !allEvents || !allLogged) return null
+    if (!seasons || !profiles || !allEvents || !allLogged || !excluded) return null
 
     // Group events and logged hours by member id.
     // Curly braces are required — a leading ; would be parsed as the loop body,
@@ -64,9 +74,9 @@ export default function HoursBoard() {
       id:        p.id,
       name:      p.full_name || '—',
       checkedIn: isCheckedIn(eventMap[p.id] ?? []),
-      breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? []),
+      breakdown: buildBreakdown(seasons, eventMap[p.id] ?? [], loggedMap[p.id] ?? [], excluded[p.id] ?? null),
     }))
-  }, [seasons, profiles, allEvents, allLogged])
+  }, [seasons, profiles, allEvents, allLogged, excluded])
 
   const rows = useMemo(() => {
     if (!byMember || selSeason === null) return null
